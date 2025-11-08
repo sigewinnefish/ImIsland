@@ -11,6 +11,10 @@
 #include "imgui_impl_dx11.h"
 #include <d3d11.h>
 #include <tchar.h>
+#include <iostream>
+#include "island.h"
+
+DWORD WINAPI launchGame(LPVOID lpParameter);
 
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -28,8 +32,14 @@ void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Main code
-int main(int, char**)
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPWSTR    lpCmdLine,
+    _In_ int       nCmdShow)
 {
+    //AllocConsole();
+    //freopen("CONOUT$", "w", stdout);
+    std::cout << "aaaaaa";
     // Make process DPI aware and obtain main monitor scale
     ImGui_ImplWin32_EnableDpiAwareness();
     float main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(::MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
@@ -48,7 +58,7 @@ int main(int, char**)
     }
 
     // Show the window
-    ::ShowWindow(hwnd, SW_SHOWDEFAULT);
+    ::ShowWindow(hwnd, SW_NORMAL); // Òþ²ØÖ÷´°¿Ú
     ::UpdateWindow(hwnd);
 
     // Setup Dear ImGui context
@@ -59,14 +69,14 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
+    io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
     //io.ConfigDockingAlwaysTabBar = true;
     //io.ConfigDockingTransparentPayload = true;
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
+    //ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
 
     // Setup scaling
     ImGuiStyle& style = ImGui::GetStyle();
@@ -106,7 +116,49 @@ int main(int, char**)
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    char path[MAX_PATH] = {0};
 
+
+    HANDLE h = OpenFileMapping(FILE_MAP_READ | FILE_MAP_WRITE, FALSE, L"4F3E8543-40F7-4808-82DC-21E48A6037A7");
+
+    if (h == NULL)
+    {
+        h = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_EXECUTE_READWRITE, 0, 1024, L"4F3E8543-40F7-4808-82DC-21E48A6037A7");
+
+    }
+    IslandEnvironment* penv = (IslandEnvironment *)MapViewOfFile(_Notnull_ h, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+    ZeroMemory(penv, sizeof(IslandEnvironment));
+    penv->IslandFunctionOffsets.MickeyWonderMethod = 97683856;
+    penv->IslandFunctionOffsets.MickeyWonderMethodPartner = 4054192;
+    penv->IslandFunctionOffsets.MickeyWonderMethodPartner2 = 186683024;
+    penv->IslandFunctionOffsets.SetFieldOfView = 16938096;
+    penv->IslandFunctionOffsets.SetEnableFogRendering = 349320976;
+    penv->IslandFunctionOffsets.SetTargetFrameRate = 349239824;
+    penv->IslandFunctionOffsets.OpenTeam = 260760016;
+    penv->IslandFunctionOffsets.OpenTeamPageAccordingly = 260940064;
+    penv->IslandFunctionOffsets.CheckCanEnter = 206502784;
+    penv->IslandFunctionOffsets.SetupQuestBanner = 220247008;
+    penv->IslandFunctionOffsets.FindGameObject = 349252176;
+    penv->IslandFunctionOffsets.SetActive = 349251472;
+    penv->IslandFunctionOffsets.EventCameraMove = 109003424;
+    penv->IslandFunctionOffsets.ShowOneDamageTextEx = 265242752;
+    penv->IslandFunctionOffsets.SwitchInputDeviceToTouchScreen = 208642176;
+    penv->IslandFunctionOffsets.MickeyWonderCombineEntryMethod = 256735408;
+    penv->IslandFunctionOffsets.MickeyWonderCombineEntryMethodPartner = 111928560;
+    penv->IslandFunctionOffsets.GetTargetFrameRate = 19127664;
+    penv->IslandFunctionOffsets.GameManagerAwake = 204333664;
+    penv->IslandFunctionOffsets.SetupResinList = 109454912;
+    penv->IslandFunctionOffsets.ResinListRemove = 0x13CDA8C0;
+    penv->IslandFunctionOffsets.ResinList = 0x1F0;
+    penv->IslandFunctionOffsets.ResinListGetItem = 0x13CD8FF0;
+    penv->IslandFunctionOffsets.ResinListGetCount = 0x13CD8F90;
+    penv->IslandFunctionOffsets.SetLastUid = 0x0F43BA90;
+    penv->TargetFrameRate = 120;
+    penv->FieldOfView = 45;
+    penv->ResinListItemId000106Allowed = 1;
+    penv->ResinListItemId107009Allowed = 1;
+    penv->ResinListItemId220007Allowed = 1;
+    penv->ResinListItemId107012Allowed = 1;
     // Main loop
     bool done = false;
     while (!done)
@@ -150,39 +202,29 @@ int main(int, char**)
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        static bool *my_tool_active = 0;
+        ImGui::Begin("Tool", my_tool_active, ImGuiWindowFlags_None);
+        if (ImGui::Button("Launch Game"))
         {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
+            CreateThread(0, 0, launchGame, path, 0, 0);
         }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
+        ImGui::InputText("Game Path", path, MAX_PATH);
+        ImGui::Checkbox("Field of View Cold Switch", (bool*)&penv->EnableSetFieldOfView);
+        ImGui::SliderFloat("Adjust FOV", &penv->FieldOfView, 5, 100);
+        ImGui::Checkbox("Remove Fog", (bool*)&penv->DisableFog);
+        ImGui::Checkbox("Frame Rate Hot Switch", (bool*)&penv->EnableSetTargetFrameRate);
+        ImGui::SliderInt("Target Frame Rate", (int*)&penv->TargetFrameRate, 5, 100);
+        ImGui::Checkbox("Special Interface Fix", (bool*)&penv->FixLowFovScene);
+        ImGui::Checkbox("Close map banner", (bool*)&penv->HideQuestBanner);
+        ImGui::Checkbox("Remove Team Configuration Progress Bar", (bool*)&penv->RemoveOpenTeamProgress);
+        ImGui::Checkbox("Disable Elemental Burst Animation", (bool*)&penv->DisableEventCameraMove);
+        ImGui::Checkbox("Disable Damage Numbers", (bool*)&penv->DisableShowDamageText);
+        ImGui::Checkbox("Crafting Redirect", (bool*)&penv->RedirectCombineEntry);
+        ImGui::Checkbox("Use Touch Input", (bool*)&penv->UsingTouchScreen);
+        ImGui::Checkbox("Claim Rewards with Primogem", (bool*)&penv->ResinListItemId000201Allowed);
+        
+        ImGui::End();
+        
         // Rendering
         ImGui::Render();
         const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
